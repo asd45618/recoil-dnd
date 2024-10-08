@@ -1,14 +1,22 @@
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from '@hello-pangea/dnd';
+import { useRecoilState } from 'recoil';
 import styled from 'styled-components';
+import { toDoState } from './atom';
+import DraggableCard from './Components/DragabbleCard';
 
 const Wrapper = styled.div`
   display: flex;
   max-width: 480px;
   width: 100%;
+  height: 100vh;
   margin: 0 auto;
   justify-content: center;
   align-items: center;
-  height: 100vh;
 `;
 
 const Boards = styled.div`
@@ -25,17 +33,26 @@ const Board = styled.div`
   min-height: 200px;
 `;
 
-const Card = styled.div`
-  border-radius: 5px;
-  margin-bottom: 5px;
-  padding: 10px 10px;
-  background-color: ${(props) => props.theme.cardColor};
-`;
-
-const toDos = ['a', 'b', 'c', 'd', 'e', 'f'];
-
 function App() {
-  const onDragEnd = () => {};
+  const [toDos, setToDos] = useRecoilState(toDoState);
+  const onDragEnd = ({ draggableId, destination, source }: DropResult) => {
+    if (!destination) return;
+
+    setToDos((oldToDos) => {
+      const toDosCopy = [...oldToDos];
+      // 1. source.index에 있는 아이템 삭제
+      console.log('Delete item on', source.index);
+      console.log(toDosCopy);
+      toDosCopy.splice(source.index, 1);
+      console.log('Delete item');
+      console.log(toDosCopy);
+      // 2. destination.index에 아이템 넣기
+      console.log('Put back', draggableId, 'on ', destination.index);
+      toDosCopy.splice(destination?.index, 0, draggableId);
+      console.log(toDosCopy);
+      return toDosCopy;
+    });
+  };
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
@@ -45,17 +62,7 @@ function App() {
             {(magic) => (
               <Board ref={magic.innerRef} {...magic.droppableProps}>
                 {toDos.map((toDo, index) => (
-                  <Draggable draggableId={toDo} index={index}>
-                    {(magic) => (
-                      <Card
-                        ref={magic.innerRef}
-                        {...magic.draggableProps}
-                        {...magic.dragHandleProps}
-                      >
-                        {toDo}
-                      </Card>
-                    )}
-                  </Draggable>
+                  <DraggableCard key={toDo} index={index} toDo={toDo} />
                 ))}
                 {magic.placeholder}
               </Board>
